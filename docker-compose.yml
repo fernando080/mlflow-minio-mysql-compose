@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+    db:
+        environment:
+          - MYSQL_DATABASE=${MYSQL_DATABASE}
+          - MYSQL_USER=${MYSQL_USER}
+          - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+          - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        expose:
+            - '3306'        
+        volumes:
+            - 'D:/mlflow_server_docker/primera_version_mysql/mlflow_server_backend:/var/lib/mysql '
+        image: 'mysql'
+        container_name: mlflow-db-MLflow
+
+    storage:
+        environment:
+            - MINIO_ACCESS_KEY=${MINIO_USR}
+            - MINIO_SECRET_KEY=${MINIO_PASS}
+        expose:
+            - '9000'
+        ports:
+            - '9000:9000'        
+        depends_on:
+            - db
+        command: server /data
+        volumes:
+            - 'D:/mlflow_server_docker/primera_version_mysql/mlflow_server_artifact:/data'
+        image: minio/minio:RELEASE.2021-02-14T04-01-33Z
+        container_name: MinIO_MLflow
+
+    mlflow:
+        build: ./mlflow
+        environment:
+            - AWS_ACCESS_KEY_ID=${MINIO_USR}
+            - AWS_SECRET_ACCESS_KEY=${MINIO_PASS}       
+        expose:
+            - '5000'
+        ports:
+            - '5000:5000'
+        depends_on:
+            - storage                       
+        image: 'mlflow:Dockerfile'
+        container_name: MLflow_server
